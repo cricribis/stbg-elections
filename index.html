@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Résultats électoraux — Strasbourg</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+  <style>
+    :root{--bg:#0d1117;--bg2:#161b22;--bg3:#21262d;--border:#30363d;--text:#e6edf3;--muted:#8b949e;--accent:#c9a84c;--accent2:#e8c97e;--green:#3fb950;--radius:8px;}
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+    body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;font-size:15px;line-height:1.6;min-height:100vh;}
+    header{background:var(--bg2);border-bottom:1px solid var(--border);padding:0 2rem;position:sticky;top:0;z-index:100;display:flex;align-items:center;gap:2rem;height:64px;}
+    .logo-city{font-family:'Playfair Display',serif;font-size:1.25rem;font-weight:900;color:var(--accent2);letter-spacing:.04em;}
+    .logo-sub{font-size:.7rem;color:var(--muted);text-transform:uppercase;letter-spacing:.12em;}
+    nav{display:flex;gap:.25rem;flex:1;flex-wrap:wrap;}
+    .nav-btn{background:none;border:1px solid transparent;color:var(--muted);padding:.45rem 1rem;border-radius:var(--radius);cursor:pointer;font-family:'DM Sans',sans-serif;font-size:.85rem;font-weight:500;transition:all .18s;}
+    .nav-btn:hover{color:var(--text);border-color:var(--border);background:var(--bg3);}
+    .nav-btn.active{background:var(--accent);color:#0d1117;border-color:var(--accent);font-weight:600;}
+    .src-badge{margin-left:auto;font-size:.72rem;color:var(--muted);border:1px solid var(--border);padding:.25rem .7rem;border-radius:20px;flex-shrink:0;}
+    .src-badge span{color:var(--green);}
+    main{max-width:1400px;margin:0 auto;padding:2rem;display:grid;grid-template-columns:260px 1fr;gap:2rem;min-height:calc(100vh - 64px);}
+    .sidebar{display:flex;flex-direction:column;gap:1rem;}
+    .sidebar-block{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;}
+    .sidebar-title{font-size:.7rem;font-weight:600;text-transform:uppercase;letter-spacing:.12em;color:var(--muted);padding:.8rem 1rem .5rem;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;}
+    .election-list{list-style:none;padding:.4rem 0;}
+    .election-list li{display:flex;align-items:center;gap:.6rem;padding:.5rem 1rem;cursor:pointer;font-size:.85rem;color:var(--muted);transition:all .15s;border-left:3px solid transparent;}
+    .election-list li:hover{background:var(--bg3);color:var(--text);}
+    .election-list li.active{background:rgba(201,168,76,.08);color:var(--accent2);border-left-color:var(--accent);}
+    .tour-badge{font-size:.62rem;padding:.1rem .4rem;border-radius:4px;font-weight:600;flex-shrink:0;}
+    .t1{background:rgba(31,111,235,.2);color:#79b8ff;}
+    .t2{background:rgba(218,54,51,.2);color:#f78166;}
+    .bv-list{list-style:none;max-height:380px;overflow-y:auto;padding:.4rem 0;}
+    .bv-list::-webkit-scrollbar{width:4px;}
+    .bv-list::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px;}
+    .bv-list li{padding:.4rem 1rem;cursor:pointer;font-size:.82rem;color:var(--muted);transition:all .15s;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+    .bv-list li:hover{background:var(--bg3);color:var(--text);}
+    .bv-list li.active{background:rgba(201,168,76,.1);color:var(--accent2);}
+    .search-input{width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);color:var(--text);padding:.55rem .8rem;font-family:'DM Sans',sans-serif;font-size:.85rem;outline:none;transition:border-color .15s;}
+    .search-input:focus{border-color:var(--accent);}
+    .search-input::placeholder{color:var(--muted);}
+    .content{display:flex;flex-direction:column;gap:1.5rem;}
+    .stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;}
+    .stat-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:1rem 1.2rem;}
+    .stat-label{font-size:.68rem;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin-bottom:.3rem;}
+    .stat-value{font-family:'Playfair Display',serif;font-size:1.6rem;font-weight:700;color:var(--accent2);}
+    .stat-sub{font-size:.73rem;color:var(--muted);margin-top:.1rem;}
+    .section-header{display:flex;align-items:baseline;gap:1rem;flex-wrap:wrap;}
+    .section-title{font-family:'Playfair Display',serif;font-size:1.35rem;font-weight:700;}
+    .section-sub{font-size:.82rem;color:var(--muted);}
+    .two-charts{display:grid;grid-template-columns:1fr 1fr;gap:1rem;}
+    .chart-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:1.5rem;}
+    .chart-title{font-size:.72rem;font-weight:600;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin-bottom:1rem;}
+    .chart-wrap{position:relative;height:280px;}
+    .pie-wrap{position:relative;height:260px;}
+    .cands-grid{display:grid;grid-template-columns:1fr 1fr;gap:1rem;}
+    .cand-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:1rem 1.2rem;display:flex;flex-direction:column;gap:.55rem;}
+    .cand-header{display:flex;align-items:center;gap:.6rem;}
+    .cand-name{font-weight:600;font-size:.88rem;flex:1;line-height:1.3;}
+    .cand-pct{font-family:'Playfair Display',serif;font-size:1.2rem;font-weight:700;white-space:nowrap;}
+    .cand-voix{font-size:.76rem;color:var(--muted);}
+    .bar-bg{height:5px;background:var(--bg3);border-radius:3px;overflow:hidden;}
+    .bar-fill{height:100%;border-radius:3px;}
+    .empty-state{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:300px;color:var(--muted);gap:1rem;text-align:center;}
+    .empty-icon{font-size:2.5rem;}
+    .empty-title{font-family:'Playfair Display',serif;font-size:1.2rem;color:var(--text);}
+    .spinner{width:32px;height:32px;border:3px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite;}
+    @keyframes spin{to{transform:rotate(360deg);}}
+    @keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+    .fade-in{animation:fadeIn .25s ease forwards;}
+    .error-box{background:rgba(218,54,51,.1);border:1px solid rgba(218,54,51,.3);border-radius:var(--radius);padding:1rem 1.2rem;font-size:.88rem;color:#f78166;}
+    @media(max-width:1024px){main{grid-template-columns:1fr}.stats-grid{grid-template-columns:repeat(2,1fr)}.cands-grid{grid-template-columns:1fr}.two-charts{grid-template-columns:1fr}}
+  </style>
+</head>
+<body>
+<header>
+  <div><div class="logo-city">Strasbourg</div><div class="logo-sub">Résultats électoraux</div></div>
+  <nav id="mainNav"></nav>
+  <div class="src-badge">Source : <span>data.strasbourg.eu</span></div>
+</header>
+<main>
+  <aside class="sidebar">
+    <div class="sidebar-block">
+      <div class="sidebar-title">Élection</div>
+      <ul class="election-list" id="electionList"></ul>
+    </div>
+    <div class="sidebar-block">
+      <div class="sidebar-title">Bureau de vote <span id="bvCount"></span></div>
+      <div style="padding:.6rem .8rem;border-bottom:1px solid var(--border)">
+        <input class="search-input" id="searchBv" type="text" placeholder="Rechercher…"/>
+      </div>
+      <ul class="bv-list" id="bvList"></ul>
+    </div>
+  </aside>
+  <section class="content" id="mainContent">
+    <div class="empty-state"><div class="empty-icon">🗳️</div><div class="empty-title">Sélectionnez une élection</div><div>Données stockées localement</div></div>
+  </section>
+</main>
+
+<script>
+// ─── CATALOGUE ──────────────────────────────────────────────
+const CATEGORIES = {
+  municipales:     { label:'Municipales',     elections:[
+    {id:'muni_2014_t1',  label:'2014', tour:1},
+    {id:'muni_2014_t2',  label:'2014', tour:2},
+    {id:'muni_2020_t1',  label:'2020', tour:1},
+    {id:'muni_2020_t2',  label:'2020', tour:2},
+    {id:'muni_2026_t1',  label:'2026', tour:1},
+    {id:'muni_2026_t2',  label:'2026', tour:2},
+  ]},
+  legislatives:    { label:'Législatives',    elections:[
+    {id:'legis_2017_t1', label:'2017', tour:1},
+    {id:'legis_2017_t2', label:'2017', tour:2},
+    {id:'legis_2022_t1', label:'2022', tour:1},
+    {id:'legis_2022_t2', label:'2022', tour:2},
+    {id:'legis_2024_t1', label:'2024', tour:1},
+    {id:'legis_2024_t2', label:'2024', tour:2},
+  ]},
+  presidentielles: { label:'Présidentielles', elections:[
+    {id:'pres_2017_t1',  label:'2017', tour:1},
+    {id:'pres_2017_t2',  label:'2017', tour:2},
+    {id:'pres_2022_t1',  label:'2022', tour:1},
+    {id:'pres_2022_t2',  label:'2022', tour:2},
+  ]},
+  regionales:      { label:'Régionales',      elections:[
+    {id:'regio_2021_t1', label:'2021', tour:1},
+    {id:'regio_2021_t2', label:'2021', tour:2},
+  ]},
+  departementales: { label:'Départementales', elections:[
+    {id:'dept_2021_t1',  label:'2021', tour:1},
+    {id:'dept_2021_t2',  label:'2021', tour:2},
+  ]},
+  europeennes:     { label:'Européennes',     elections:[
+    {id:'euro_2024_t1',  label:'2024', tour:1},
+  ]},
+};
+
+// Couleurs par mots-clés dans le libellé de liste/candidat
+function couleur(lib) {
+  const l = (lib||'').toLowerCase();
+  if (l.includes('lutte ouvrière')||(/ \(lo\)/.test(l))) return '#7f0000';
+  if (l.includes('républicain')||l.includes('(lr)')||l.includes('aimer strasbourg')||l.includes('vetter')||l.includes('keller')) return '#3498db';
+  if (l.includes('socialiste')||l.includes('(ps)')||l.includes('trautmann')||l==='ries') return '#e74c3c';
+  if (l.includes('rassemblement national')||l.includes('(rn)')||l.includes('jacobelli')) return '#2c3e50';
+  if (l.includes('insoumis')||l.includes('(fi)')||l.includes('france insoumise')) return '#8e44ad';
+  if (l.includes('union de la gauche')||l.includes('nupes')||l.includes('nouveau front')||l.includes('(nfp)')||l.includes('union à gauche')) return '#c0392b';
+  if (l.includes('renaissance')||l.includes('ensemble !')||l.includes('(lrem)')||l.includes('en marche')||l.includes('fontanel')||l.includes('macron')) return '#f39c12';
+  if (l.includes('vert')||l.includes('écolo')||l.includes('(eelv)')||l.includes('barseghian')||l.includes('fière, juste')||l==='jund') return '#27ae60';
+  if (l.includes('modem')||l.includes('mouvement démocrate')) return '#16a085';
+  if (l.includes('reconquête')||l.includes('zemmour')) return '#1a252f';
+  if (l.includes('communiste')||l.includes('(pcf)')) return '#922b21';
+  if (l.includes('philippot')||l.includes('liberté !')) return '#e67e22';
+  if (l.includes('debout')||l.includes('dupont-aignan')) return '#d35400';
+  if (l==='schaffhauser') return '#8e44ad';
+  if (l==='loos') return '#f39c12';
+  if (l==='del grande'||l==='del_grande') return '#95a5a6';
+  if (l==='val') return '#7f8c8d';
+  return '#7f8c8d';
+}
+
+// ─── ÉTAT ───────────────────────────────────────────────────
+let state = {cat:'municipales', elecId:null, bvId:null, search:''};
+let cache = {};   // elecId → données JSON
+let bureaux = {};
+let chartBar=null, chartPie=null;
+
+// ─── NAVIGATION ─────────────────────────────────────────────
+const nav = document.getElementById('mainNav');
+Object.entries(CATEGORIES).forEach(([key,cat]) => {
+  const btn = document.createElement('button');
+  btn.className = 'nav-btn'+(key===state.cat?' active':'');
+  btn.textContent = cat.label;
+  btn.onclick = () => {
+    state.cat=key; state.elecId=null; state.bvId=null; bureaux={};
+    document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    renderElectionList(); renderBvList(); showEmpty();
+  };
+  nav.appendChild(btn);
+});
+
+document.getElementById('searchBv').addEventListener('input', e => {
+  state.search = e.target.value.toLowerCase();
+  renderBvList();
+});
+
+// ─── RENDER ÉLECTIONS ───────────────────────────────────────
+function renderElectionList() {
+  const ul = document.getElementById('electionList');
+  ul.innerHTML = CATEGORIES[state.cat].elections.map(e =>
+    `<li data-id="${e.id}" class="${e.id===state.elecId?'active':''}">
+      <span class="tour-badge t${e.tour}">T${e.tour}</span>${e.label}
+    </li>`
+  ).join('');
+  ul.querySelectorAll('li').forEach(li => li.addEventListener('click', () => loadElection(li.dataset.id)));
+}
+
+// ─── RENDER BUREAUX ─────────────────────────────────────────
+function renderBvList() {
+  const ul = document.getElementById('bvList');
+  const ids = Object.keys(bureaux)
+    .filter(id => !state.search || bureaux[id].label.toLowerCase().includes(state.search))
+    .sort((a,b) => a.localeCompare(b,undefined,{numeric:true}));
+  document.getElementById('bvCount').textContent = ids.length||'';
+  ul.innerHTML = ids.map(id =>
+    `<li data-id="${id}" class="${id===state.bvId?'active':''}" title="${bureaux[id].label}">${bureaux[id].label}</li>`
+  ).join('');
+  ul.querySelectorAll('li').forEach(li => li.addEventListener('click', () => {
+    state.bvId=li.dataset.id; renderBvList(); renderContent();
+  }));
+}
+
+// ─── CHARGEMENT ─────────────────────────────────────────────
+async function loadElection(elecId) {
+  state.elecId=elecId; state.bvId=null; bureaux={};
+  renderElectionList(); renderBvList();
+  showLoading('Chargement…');
+  try {
+    if (!cache[elecId]) {
+      const r = await fetch(`data/${elecId}.json`);
+      if (!r.ok) throw new Error(`Fichier data/${elecId}.json introuvable — lancez d'abord le script download_data.py`);
+      cache[elecId] = await r.json();
+    }
+    const data = cache[elecId];
+    // Ajouter couleurs et % calculés
+    bureaux = {};
+    Object.entries(data.bureaux).forEach(([bid,bv]) => {
+      bureaux[bid] = {
+        ...bv,
+        abstentions: bv.inscrits - bv.votants,
+        cands: bv.cands.map(c => ({
+          ...c,
+          pct:   bv.exprimes > 0 ? c.voix/bv.exprimes*100 : 0,
+          color: couleur(c.nom),
+        })),
+      };
+    });
+    const firstId = Object.keys(bureaux).sort((a,b)=>a.localeCompare(b,undefined,{numeric:true}))[0];
+    state.bvId = firstId;
+    renderBvList(); renderContent();
+  } catch(err) {
+    console.error(err);
+    showError(err.message);
+  }
+}
+
+// ─── RENDER CONTENU ─────────────────────────────────────────
+function renderContent() {
+  if (!state.bvId||!bureaux[state.bvId]) return;
+  const bv = bureaux[state.bvId];
+  const participation = bv.inscrits ? bv.votants/bv.inscrits*100 : 0;
+  const elec = CATEGORIES[state.cat].elections.find(e=>e.id===state.elecId);
+
+  if (chartBar){chartBar.destroy();chartBar=null;}
+  if (chartPie){chartPie.destroy();chartPie=null;}
+
+  document.getElementById('mainContent').innerHTML = `
+    <div class="section-header fade-in">
+      <div class="section-title">${CATEGORIES[state.cat].label} ${elec?.label} — Tour ${elec?.tour}</div>
+      <div class="section-sub">${bv.label}</div>
+    </div>
+    <div class="stats-grid fade-in">
+      <div class="stat-card"><div class="stat-label">Inscrits</div><div class="stat-value">${fmt(bv.inscrits)}</div></div>
+      <div class="stat-card"><div class="stat-label">Participation</div><div class="stat-value">${fmtPct(participation)}</div><div class="stat-sub">${fmt(bv.votants)} votants</div></div>
+      <div class="stat-card"><div class="stat-label">Abstentions</div><div class="stat-value">${fmt(bv.abstentions)}</div><div class="stat-sub">${fmtPct(bv.inscrits?bv.abstentions/bv.inscrits*100:0)}</div></div>
+      <div class="stat-card"><div class="stat-label">Exprimés</div><div class="stat-value">${fmt(bv.exprimes)}</div><div class="stat-sub">${fmt(bv.blancs)} blancs · ${fmt(bv.nuls)} nuls</div></div>
+    </div>
+    ${bv.cands.length ? `
+    <div class="two-charts fade-in">
+      <div class="chart-card"><div class="chart-title">Résultats par liste / candidat</div><div class="chart-wrap"><canvas id="chartBar"></canvas></div></div>
+      <div class="chart-card"><div class="chart-title">Répartition des voix</div><div class="pie-wrap"><canvas id="chartPie"></canvas></div></div>
+    </div>
+    <div class="cands-grid fade-in">
+      ${bv.cands.map((c,i)=>{
+        const rank=['🥇','🥈','🥉'][i]||`${i+1}.`;
+        return `<div class="cand-card">
+          <div class="cand-header">
+            <span style="min-width:1.6rem;font-size:.9rem">${rank}</span>
+            <span class="cand-name">${c.nom}</span>
+            <span class="cand-pct" style="color:${c.color}">${fmtPct(c.pct)}</span>
+          </div>
+          <div class="bar-bg"><div class="bar-fill" style="width:${Math.min(c.pct,100)}%;background:${c.color}"></div></div>
+          <div class="cand-voix">${fmt(c.voix)} voix</div>
+        </div>`;
+      }).join('')}
+    </div>` : `
+    <div class="empty-state fade-in">
+      <div class="empty-icon">📊</div>
+      <div class="empty-title">Participation disponible</div>
+      <div>Les scores par candidat ne sont pas disponibles.</div>
+    </div>`}
+  `;
+
+  if (!bv.cands.length) return;
+
+  const shortLabel = nom => {
+    const m = nom.match(/^([A-ZÉÀÈÊÂÙÎÔÛŒ\-]+)\s/);
+    return m ? m[1] : nom.split(' ')[0];
+  };
+
+  chartBar = new Chart(document.getElementById('chartBar').getContext('2d'),{
+    type:'bar',
+    data:{labels:bv.cands.map(c=>shortLabel(c.nom)),
+      datasets:[{data:bv.cands.map(c=>+c.pct.toFixed(1)),
+        backgroundColor:bv.cands.map(c=>c.color+'cc'),
+        borderColor:bv.cands.map(c=>c.color),borderWidth:1,borderRadius:4}]},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>` ${ctx.parsed.y.toFixed(1)} % — ${fmt(bv.cands[ctx.dataIndex].voix)} voix`}}},
+      scales:{x:{ticks:{color:'#8b949e',font:{size:11},maxRotation:35},grid:{color:'#30363d'}},
+              y:{ticks:{color:'#8b949e',callback:v=>v+'%'},grid:{color:'#30363d30'},beginAtZero:true}}}
+  });
+
+  chartPie = new Chart(document.getElementById('chartPie').getContext('2d'),{
+    type:'doughnut',
+    data:{labels:bv.cands.map(c=>c.nom),
+      datasets:[{data:bv.cands.map(c=>c.voix),
+        backgroundColor:bv.cands.map(c=>c.color+'cc'),
+        borderColor:'#161b22',borderWidth:2,hoverOffset:6}]},
+    options:{responsive:true,maintainAspectRatio:false,cutout:'55%',
+      plugins:{legend:{position:'right',labels:{color:'#8b949e',font:{size:10},boxWidth:10,padding:5}},
+        tooltip:{callbacks:{label:ctx=>` ${ctx.label}: ${fmt(ctx.parsed)} voix`}}}}
+  });
+}
+
+function fmt(n){return Math.round(n||0).toLocaleString('fr-FR');}
+function fmtPct(n){return (Math.round((n||0)*10)/10).toFixed(1)+' %';}
+function showLoading(msg){document.getElementById('mainContent').innerHTML=`<div class="empty-state"><div class="spinner"></div><div>${msg}</div></div>`;}
+function showEmpty(){document.getElementById('mainContent').innerHTML=`<div class="empty-state"><div class="empty-icon">🗳️</div><div class="empty-title">Sélectionnez une élection</div><div>Données stockées localement</div></div>`;}
+function showError(msg){document.getElementById('mainContent').innerHTML=`<div class="empty-state"><div class="error-box">${msg}</div></div>`;}
+
+renderElectionList();
+</script>
+</body>
+</html>
