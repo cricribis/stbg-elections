@@ -245,7 +245,9 @@ function renderBvList() {
 // ─── CHARGEMENT ─────────────────────────────────────────────
 async function loadElection(elecId) {
   state.elecId=elecId; state.bvId=null; bureaux={};
-  renderElectionList(); renderBvList();
+  renderElectionList();
+  document.getElementById('bvList').innerHTML = '';
+  document.getElementById('bvCount').textContent = '';
   showLoading('Chargement…');
   try {
     if (!cache[elecId]) {
@@ -268,7 +270,8 @@ async function loadElection(elecId) {
       };
     });
 
-    // ── Total tous bureaux ──────────────────────────────────
+    // ── Total tous bureaux (sauf départementales) ───────────
+    if (state.cat !== 'departementales') {
     const totCands = {};
     let totInscrits=0, totVotants=0, totBlancs=0, totNuls=0, totExprimes=0;
     Object.values(bureaux).forEach(bv => {
@@ -292,9 +295,12 @@ async function loadElection(elecId) {
       blancs: totBlancs, nuls: totNuls, exprimes: totExprimes,
       cands: totCandsArr,
     };
-
-    state.bvId = '__total__';
-    renderBvList(); renderContent();
+      state.bvId = '__total__';
+    } else {
+      state.bvId = Object.keys(bureaux).sort((a,b)=>a.localeCompare(b,undefined,{numeric:true}))[0];
+    }
+    renderBvList();
+    renderContent();
   } catch(err) {
     console.error(err);
     showError(err.message);
