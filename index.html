@@ -198,7 +198,7 @@ Object.entries(CATEGORIES).forEach(([key,cat]) => {
   btn.className = 'nav-btn'+(key===state.cat?' active':'');
   btn.textContent = cat.label;
   btn.onclick = () => {
-    state.cat=key; state.elecId=null; state.bvId=null; bureaux={};
+    state.cat=key; state.elecId=null; state.bvId=null; bureaux={}; cache={};
     document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
     btn.classList.add('active');
     renderElectionList(); renderBvList(); showEmpty();
