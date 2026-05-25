@@ -230,7 +230,7 @@ function renderBvList() {
     .filter(id => !state.search || bureaux[id].label.toLowerCase().includes(state.search))
     .sort((a,b) => a.localeCompare(b,undefined,{numeric:true}));
   // Insérer le total en tête (sauf si recherche active)
-  const allIds = state.search ? ids : ['__total__', ...ids];
+  const allIds = state.search ? ids : (bureaux['__total__'] ? ['__total__', ...ids] : ids);
   document.getElementById('bvCount').textContent = ids.length||'';
   ul.innerHTML = allIds.map(id =>
     `<li data-id="${id}" class="${id===state.bvId?'active':''}" title="${bureaux[id].label}"
@@ -270,8 +270,9 @@ async function loadElection(elecId) {
       };
     });
 
-    // ── Total tous bureaux (sauf départementales) ───────────
-    if (state.cat !== 'departementales') {
+    // ── Total tous bureaux (municipales, présidentielles, régionales, européennes uniquement) ──
+    const CATS_AVEC_TOTAL = new Set(['municipales','presidentielles','regionales','europeennes']);
+    if (CATS_AVEC_TOTAL.has(state.cat)) {
     const totCands = {};
     let totInscrits=0, totVotants=0, totBlancs=0, totNuls=0, totExprimes=0;
     Object.values(bureaux).forEach(bv => {
