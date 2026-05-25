@@ -143,21 +143,46 @@ function couleur(lib) {
   if (l.includes('lutte ouvrière')||(/ \(lo\)/.test(l))) return '#7f0000';
   if (l.includes('républicain')||l.includes('(lr)')||l.includes('aimer strasbourg')||l.includes('vetter')||l.includes('keller')) return '#3498db';
   if (l.includes('socialiste')||l.includes('(ps)')||l.includes('trautmann')||l==='ries') return '#e74c3c';
-  if (l.includes('rassemblement national')||l.includes('(rn)')||l.includes('jacobelli')) return '#2c3e50';
-  if (l.includes('insoumis')||l.includes('(fi)')||l.includes('france insoumise')) return '#8e44ad';
-  if (l.includes('union de la gauche')||l.includes('nupes')||l.includes('nouveau front')||l.includes('(nfp)')||l.includes('union à gauche')) return '#c0392b';
-  if (l.includes('renaissance')||l.includes('ensemble !')||l.includes('(lrem)')||l.includes('en marche')||l.includes('fontanel')||l.includes('macron')) return '#f39c12';
-  if (l.includes('vert')||l.includes('écolo')||l.includes('(eelv)')||l.includes('barseghian')||l.includes('fière, juste')||l==='jund') return '#27ae60';
-  if (l.includes('modem')||l.includes('mouvement démocrate')) return '#16a085';
+  if (l.includes('rassemblement national')||l.includes('(rn)')||l.includes('jacobelli')||l.includes('brastenhofer')||l.includes('gourtovyi')) return '#2c3e50';
+  if (l.includes('insoumis')||l.includes('(fi)')||l.includes('france insoumise')||l.includes('mélenchon')) return '#8e44ad';
+  if (l.includes('union de la gauche')||l.includes('nupes')||l.includes('nouveau front')||l.includes('(nfp)')||l.includes('union à gauche')||l.includes('elkouby')||l.includes('divers gauche')) return '#e74c3c';
+  if (l.includes('renaissance')||l.includes('ensemble !')||l.includes('(lrem)')||l.includes('en marche')||l.includes('fontanel')||l.includes('macron')||l.includes('studer')||l.includes('waserman')) return '#f39c12';
+  if (l.includes('vert')||l.includes('écolo')||l.includes('(eelv)')||l.includes('barseghian')||l.includes('fière, juste')||l==='jund'||l.includes('regol')||l.includes('romani')||l.includes('filippetti')) return '#27ae60';
+  if (l.includes('modem')||l.includes('mouvement démocrate')||l.includes('klinkert')||l.includes('divers centre')) return '#16a085';
   if (l.includes('reconquête')||l.includes('zemmour')) return '#1a252f';
   if (l.includes('communiste')||l.includes('(pcf)')) return '#922b21';
   if (l.includes('philippot')||l.includes('liberté !')) return '#e67e22';
   if (l.includes('debout')||l.includes('dupont-aignan')) return '#d35400';
+  if (l.includes('rottner')||l.includes('union au centre')) return '#3498db';
+  // Légis 2017 — noms courts sans parti
+  if (l==='michels') return '#e67e22';
+  if (l==='schalck') return '#3498db';
+  if (l==='brom') return '#27ae60';
+  if (l==='didelot') return '#f39c12';
+  if (l==='ramdane') return '#c0392b';
+  if (l==='hervault') return '#16a085';
   if (l==='schaffhauser') return '#8e44ad';
   if (l==='loos') return '#f39c12';
   if (l==='del grande'||l==='del_grande') return '#95a5a6';
   if (l==='val') return '#7f8c8d';
   return '#7f8c8d';
+}
+
+// Label court pour les graphiques barres — corrigé pour éviter "LE", "MME", "M."
+function shortLabel(nom) {
+  // Supprimer la partie entre parenthèses : "LE PEN Marine (Front National)" → "LE PEN Marine"
+  const sans = nom.replace(/\s*\(.*\)\s*$/, '').trim();
+  // Format "NOM Prénom" (majuscules) : prendre les mots majuscules
+  const mots = sans.split(/\s+/);
+  // Ignorer les titres de civilité
+  const IGNORES = new Set(['MME','M.','M','MR','DR','ME']);
+  const majuscules = mots.filter(m => m === m.toUpperCase() && m.length > 1 && !IGNORES.has(m));
+  if (majuscules.length > 0) return majuscules.slice(0,2).join(' ');
+  // Format "Prénom NOM" (régionales, dept) : prendre le dernier mot en majuscule
+  const dernierMaj = [...mots].reverse().find(m => m === m.toUpperCase() && m.length > 1 && !IGNORES.has(m));
+  if (dernierMaj) return dernierMaj;
+  // Fallback : premier mot
+  return mots[0];
 }
 
 // ─── ÉTAT ───────────────────────────────────────────────────
@@ -201,11 +226,16 @@ function renderElectionList() {
 function renderBvList() {
   const ul = document.getElementById('bvList');
   const ids = Object.keys(bureaux)
+    .filter(id => id !== '__total__')
     .filter(id => !state.search || bureaux[id].label.toLowerCase().includes(state.search))
     .sort((a,b) => a.localeCompare(b,undefined,{numeric:true}));
+  // Insérer le total en tête (sauf si recherche active)
+  const allIds = state.search ? ids : ['__total__', ...ids];
   document.getElementById('bvCount').textContent = ids.length||'';
-  ul.innerHTML = ids.map(id =>
-    `<li data-id="${id}" class="${id===state.bvId?'active':''}" title="${bureaux[id].label}">${bureaux[id].label}</li>`
+  ul.innerHTML = allIds.map(id =>
+    `<li data-id="${id}" class="${id===state.bvId?'active':''}" title="${bureaux[id].label}"
+      style="${id==='__total__'?'font-weight:600;color:var(--accent);border-bottom:1px solid var(--border);padding-bottom:.6rem;margin-bottom:.2rem;':''}"
+    >${bureaux[id].label}</li>`
   ).join('');
   ul.querySelectorAll('li').forEach(li => li.addEventListener('click', () => {
     state.bvId=li.dataset.id; renderBvList(); renderContent();
@@ -237,8 +267,33 @@ async function loadElection(elecId) {
         })),
       };
     });
-    const firstId = Object.keys(bureaux).sort((a,b)=>a.localeCompare(b,undefined,{numeric:true}))[0];
-    state.bvId = firstId;
+
+    // ── Total tous bureaux ──────────────────────────────────
+    const totCands = {};
+    let totInscrits=0, totVotants=0, totBlancs=0, totNuls=0, totExprimes=0;
+    Object.values(bureaux).forEach(bv => {
+      totInscrits  += bv.inscrits;
+      totVotants   += bv.votants;
+      totBlancs    += bv.blancs;
+      totNuls      += bv.nuls;
+      totExprimes  += bv.exprimes;
+      bv.cands.forEach(c => {
+        if (!totCands[c.nom]) totCands[c.nom] = {nom:c.nom, voix:0, color:c.color};
+        totCands[c.nom].voix += c.voix;
+      });
+    });
+    const totCandsArr = Object.values(totCands)
+      .map(c => ({...c, pct: totExprimes>0 ? c.voix/totExprimes*100 : 0}))
+      .sort((a,b) => b.voix - a.voix);
+    bureaux['__total__'] = {
+      label: '📊 Total — Tous les bureaux',
+      inscrits: totInscrits, votants: totVotants,
+      abstentions: totInscrits - totVotants,
+      blancs: totBlancs, nuls: totNuls, exprimes: totExprimes,
+      cands: totCandsArr,
+    };
+
+    state.bvId = '__total__';
     renderBvList(); renderContent();
   } catch(err) {
     console.error(err);
@@ -294,11 +349,6 @@ function renderContent() {
   `;
 
   if (!bv.cands.length) return;
-
-  const shortLabel = nom => {
-    const m = nom.match(/^([A-ZÉÀÈÊÂÙÎÔÛŒ\-]+)\s/);
-    return m ? m[1] : nom.split(' ')[0];
-  };
 
   chartBar = new Chart(document.getElementById('chartBar').getContext('2d'),{
     type:'bar',
