@@ -273,32 +273,33 @@ async function loadElection(elecId) {
     // ── Total tous bureaux (municipales, présidentielles, régionales, européennes uniquement) ──
     const CATS_AVEC_TOTAL = new Set(['municipales','presidentielles','regionales','europeennes']);
     if (CATS_AVEC_TOTAL.has(state.cat)) {
-    const totCands = {};
-    let totInscrits=0, totVotants=0, totBlancs=0, totNuls=0, totExprimes=0;
-    Object.values(bureaux).forEach(bv => {
-      totInscrits  += bv.inscrits;
-      totVotants   += bv.votants;
-      totBlancs    += bv.blancs;
-      totNuls      += bv.nuls;
-      totExprimes  += bv.exprimes;
-      bv.cands.forEach(c => {
-        if (!totCands[c.nom]) totCands[c.nom] = {nom:c.nom, voix:0, color:c.color};
-        totCands[c.nom].voix += c.voix;
+      const totCands = {};
+      let totInscrits=0, totVotants=0, totBlancs=0, totNuls=0, totExprimes=0;
+      Object.values(bureaux).forEach(bv => {
+        totInscrits += bv.inscrits;
+        totVotants  += bv.votants;
+        totBlancs   += bv.blancs;
+        totNuls     += bv.nuls;
+        totExprimes += bv.exprimes;
+        bv.cands.forEach(c => {
+          if (!totCands[c.nom]) totCands[c.nom] = {nom:c.nom, voix:0, color:c.color};
+          totCands[c.nom].voix += c.voix;
+        });
       });
-    });
-    const totCandsArr = Object.values(totCands)
-      .map(c => ({...c, pct: totExprimes>0 ? c.voix/totExprimes*100 : 0}))
-      .sort((a,b) => b.voix - a.voix);
-    bureaux['__total__'] = {
-      label: '📊 Total — Tous les bureaux',
-      inscrits: totInscrits, votants: totVotants,
-      abstentions: totInscrits - totVotants,
-      blancs: totBlancs, nuls: totNuls, exprimes: totExprimes,
-      cands: totCandsArr,
-    };
+      const totCandsArr = Object.values(totCands)
+        .map(c => ({...c, pct: totExprimes>0 ? c.voix/totExprimes*100 : 0}))
+        .sort((a,b) => b.voix - a.voix);
+      bureaux['__total__'] = {
+        label: '📊 Total — Tous les bureaux',
+        inscrits: totInscrits, votants: totVotants,
+        abstentions: totInscrits - totVotants,
+        blancs: totBlancs, nuls: totNuls, exprimes: totExprimes,
+        cands: totCandsArr,
+      };
       state.bvId = '__total__';
     } else {
-      state.bvId = Object.keys(bureaux).sort((a,b)=>a.localeCompare(b,undefined,{numeric:true}))[0];
+      // Pas de total — sélectionner directement le premier bureau
+      state.bvId = Object.keys(bureaux).sort((a,b) => a.localeCompare(b,undefined,{numeric:true}))[0];
     }
     renderBvList();
     renderContent();
